@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+
+    <title>Registering In/Out of Buses  </title>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+   
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.11.3/datatables.min.js"></script>
+
+    <?!= HtmlService.createHtmlOutputFromFile('stylesheet').getContent(); ?>
+    
+    <script>
+
+        let inOutData = [];
+
+        <? var values2 = readRange(); ?>
+
+        <? for (var i=0; i<values2.length; i++) { ?>
+          inOutData.push([
+            <?= values2[i][0] ?>,
+            <?= values2[i][1]!=null ? values2[i][1] : "" ?>, 
+            <?= values2[i][2]+" "+ values2[i][3] ?>,
+            <?= values2[i][4]!=null ? values2[i][4] : "" ?>,
+            <?= values2[i][5]!=null ? values2[i][5] : "" ?>,
+            <?= !isNaN(values2[i][6]) ? values2[i][6] : '' ?>,
+            <?= values2[i][7]!=null ? values2[i][7] : '' ?>,
+            <?= values2[i][8]!=null ? values2[i][8] : '' ?>
+          ]);
+        <? } ?>
+        //console.log('i: %s', inOutData[i][3]);
+
+        <? 
+          var regPlates = values2.map( function(item) {
+                  return item[4];
+                }).sort();
+        ?>
+
+        let absenseData = [];
+
+        <? var absenseValues = readAbsenses(); ?>
+
+        <? for (var i=0; i<absenseValues.length; i++) { ?>
+          absenseData.push([
+             <?= !isNaN(absenseValues[i][0]) ? absenseValues[i][0] : '' ?>,
+            <?= !isNaN(absenseValues[i][1]) ? absenseValues[i][1] : '' ?>,
+            <?= absenseValues[i][2]!=null ? absenseValues[i][2] : "" ?>,
+            <?= absenseValues[i][3]!=null ? absenseValues[i][3] : "" ?>,
+            <?= absenseValues[i][4]!=null ? absenseValues[i][4] : "" ?>,
+            <?= absenseValues[i][5]!=null ? absenseValues[i][5] : "" ?>,
+            <?= absenseValues[i][6]!=null ? absenseValues[i][6] : "" ?>
+          ]);
+        <? } ?>
+
+
+        $(document).ready(function () {
+            $('#table_id').DataTable({
+              deferRender:    true,
+              scrollY:        600,
+              pageLength: 15,
+              lengthMenu: [ 15, 30, 50, 100, 150, 1000 ],
+              /*
+              language: {
+                  url: '//cdn.datatables.net/plug-ins/1.11.3/i18n/pl.json',
+              },
+              */
+              data: inOutData,
+              columns: [
+                { "title": "#", class: "td_nom" },
+                { "title": "Status", class: "td_status" },
+                { 
+                  
+                  "title": "Route exiit", 
+                  class: "td_route_exit",
+                  render: function(data, type) {
+                    var parts = data.split(' ');
+                    if (parts.length<2) return data;
+                    data='<span class="span_route">'+ parts[0] + '</span>'+
+                         '<span class="span_exit">'+ parts[1] + '</span>';
+                    //data=data.replace(' ', '/');
+                    return data;
+                  }
+                },
+                { "title": "Bus", class: "td_bus" },
+                { "title": "Driver", class: "td_driver" },
+                { 
+                  "title": "Distance", 
+                  class: "td_distance",
+                  render: function(data, type) {
+                    data='<span class="span_distance">' + data + '</span>'+
+                         '<input class="bus_distance" type="number"; value="'+ data + '">';
+                    return data;
+                  }
+                },
+                { 
+                  "title": "Depart", 
+                  class: "td_bus_out",
+                  render: function(val, type, row) {
+                    data='<button class="btn_out" id="btno'+row[0]+'" '+ 
+                      'style ="' + (jQuery.isEmptyObject(val) 
+                        ? "display:block"   
+                        : "display:none")+'"> Exit  </button>'+
+
+                        '<span class="spn_out" '+
+                          'style='+(jQuery.isEmptyObject(val)  
+                          ? "display:none" 
+                          : "display:block")+'">'+val+'</span>';
+
+                    return data;
+                  } 
+                },
+                { 
+                  "title": "Arrival", 
+                  class: "td_bus_in" ,
+                  render: function(val, type, row) {
+                    data='<button class="btn_in" id="btni'+row[0]+'" '+ 
+                      'style ="' + (jQuery.isEmptyObject(val) && !jQuery.isEmptyObject(row[7]) 
+                        ? "display:block"   
+                        : "display:none")+'"> Enter  </button>'+
+
+                        '<span class="spn_out" '+
+                          'style='+(jQuery.isEmptyObject(val)  
+                          ? "display:none" 
+                          : "display:block")+'">'+val+'</span>';
+
+                    return data;
+                  }
+                },
+              ]
+              
+            });
+
+            // DataTable
+            var table = $('#tbl_absense_id').DataTable({
+              deferRender:    true,
+              scrollY:        600,
+
+              /*
+              language: {
+                  url: '//cdn.datatables.net/plug-ins/1.11.3/i18n/pl.json',
+              },
+              */
+              data: absenseData,
+              initComplete: function () {
+                  // Apply the search
+                  //i=0;
+                  this.api().columns().every( function () {
+                      var that = this;
+
+                      // console.log('i: %d', i);
+                      $( 'select, input', this.footer() ).on( 'keyup change clear', function () {
+                          //console.log('Select Searched');
+                          if ( that.search() !== this.value ) {
+                              that
+                                  .search( this.value )
+                                  .draw();
+                          }
+                      } );
+
+                  } );
+              },
+              columns: [
+                { "title": " #", class: "td_abs_nom" },
+                { "title": "Depot", class: "td_depot" },
+                { "title": "Bus", class: "td_reg_plate" },
+                { "title": "Absence Type", class: "td_absense_type" },
+                { "title": "Status", class: "td_absense_status" },
+                { 
+                  "title": "Date Range", 
+                  class: "td_date_range",
+                  render: function(data, type) {
+                    return data;
+                  }
+                },
+                { "title": "Comment", class: "td_comment" }
+              ]
+            });
+
+            $('#div_absense').css("display", "none");
+
+            $( "#reg_plate_select_id option" ).each(function(index) {
+              $('#dl_reg_plates').append($(this).clone(true));
+            });
+
+            $( "#absense_type_select_id option" ).each(function(index) {
+              $('#dl_absense_type').append($(this).clone(true));
+            });
+            
+        });
+
+    </script>
+  </head>
+  <body>
+    <div id="div_selector">
+      <button type="button" class="btn btn-primary btn-lg btn-block" id="btn_selector_in_out">Bus In/Out Register</button>
+      <button type="button" class="btn btn-secondary btn-lg btn-block" id="btn_selector_absense">Absences</button>  
+    </div>
+
+    <div id="div_table">
+      <!-- Used the style from: https://datatables.net/examples/styling/bootstrap.html -->
+      <table id="table_id" class="display nowrap tbl_inout">
+        <thead>
+          <tr>
+            <th class="th_nom"> # </th>
+            <th class="th_status" > Status </th>
+            <th class="td_route_exit"> Route Exit </th>
+            <th class="td_bus"> Bus </th>
+            <th class="td_driver"> Driver </th>
+            <th class="td_distance"> Distance </th>
+            <th class="td_bus_out"> Depart </th>
+            <th class="td_bus_out"> Arrival </th>
+          </tr>
+        </thead>
+        
+        <tbody id="tableBody">
+          
+        </tbody>
+      </table>
+
+      <div class='block'>
+        <button class='btn btn-lg btn-primary'>Save</button>
+      </div>
+
+    </div>
+
+    <div id="div_absense">
+      <table id="tbl_absense_id" class="display tbl_absense">
+        <thead>
+          <th class="th_abs_nom"> # </th>
+          <th class="th_depot"> Depot # </th>
+          <th class="th_reg_plate"> Bus </th>
+          <th class="th_absense_type"> Absence type </th>
+          <th class="th_absense_status"> Status </th>
+          <th class="th_date_range"> Date range </th>
+          <th class="th_comment"> Comment </th>
+        </thead>
+        <tbody id="tableAbsenseBody">
+          <tfoot>
+            <tr>
+            <th>  &nbsp; </th>
+            <th id="th_depot_id"> 
+              <select class="form-select">
+              <option value="All" selected> All </option>
+              <option value="1"> 1st </option>
+              <option value="2"> 2ns </option>
+              <option value="3"> 3rd </option>
+              </select>
+            </th>
+             <th id="th_reg_plate"> 
+              <select class="form-select" id="reg_plate_select_id">
+              <option value="" selected> All </option>
+              <? 
+                for (i=0; i<regPlates.length; i++) {
+              ?>
+              <option value=<?= regPlates[i] ?> > <?= regPlates[i] ?> </option>
+              <? } ?>
+              </select> 
+            </th>
+            <th id="th_abstype_id"> 
+              <select class="form-select" id="absense_type_select_id">
+              <option value="" selected> All absence types </option>
+              <? var absenseTypes = readAbsenseTypes(); 
+                for (i=0; i<absenseTypes.length; i++) {
+              ?>
+              <option value=<?= absenseTypes[i][1] ?> > <?= absenseTypes[i][0] ?> </option>
+              <? } ?>
+              </select> 
+            </th>
+            <th id="th_status_id"> 
+              <select class="form-select" id="status_select_id">
+              <option value="" selected> All statuses </option>
+              <? var statusTypes = readStatuses(); 
+                for (i=0; i<statusTypes.length; i++) {
+              ?>
+              <option value=<?= statusTypes[i][1] ?> > <?= statusTypes[i][0] ?> </option>
+              <? } ?>
+              </select>  
+            </th>
+            <th id="th_dtrange_id"> 
+              <input type="text" id="dtrange_input_id" value="">
+            </th>
+            <th id="th_comment_id"> 
+              <input type="text" id="comment_input_id" value="">
+            </th>
+            </tr>
+          </tfoot>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="absense_editor" style="display: none;">
+      <dialog id="favDialog"> <!-- see link: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog -->
+        <form method="dialog">
+          <table id="tbl_dialog">
+            <tr>
+              <td> <snap>Bus</snap><snap class="red_asterix">*</snap></td>
+              <td>
+                <select id="dl_reg_plates" class="form-control" ></select> 
+              </td>
+            </tr>
+            <tr>
+              <td> <snap>Absence type</snap><snap class="red_asterix">*</snap></td>
+              <td>
+                <select id="dl_absense_type" class="form-control"></select> 
+              </td>
+            </tr>
+            <tr>
+              <td> <snap>Start date</snap><snap class="red_asterix">*</snap></td>
+              <td> 
+                <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
+                <input type="datetime-local" id="dl_start_date" class="form-control">
+              </td>
+            </tr>
+            <tr>
+              <td> <snap>End date</snap><snap class="red_asterix">*</snap></td>
+              <td> 
+                <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
+                <input type="datetime-local" id="dl_end_date" class="form-control">
+              </td>
+            </tr>
+            <tr>
+              <td> <snap>Comment</snap></td>
+              <td> 
+                <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
+                <input type="text" id="dl_comment" class="form-control" >
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td> </td>
+            </tr>
+            <tr>
+              <menu>
+                <td></td>
+                <td>
+                  <table>
+                    <tr>
+                      <td><button id="confirmBtn" value="default" class="form-control">Save</button></td>
+                      <td> &nbsp; &nbsp; &nbsp;</td>
+                      <td><button value="cancel" class="form-control">Close</button></td>
+                    </tr>
+                  </table>
+                </td>
+              </menu>
+            </tr>
+          </table>
+        </form>
+      </dialog>
+    </div>
+
+    <?!= HtmlService.createHtmlOutputFromFile('javascript').getContent(); ?>
+    
+  </body>
+</html>

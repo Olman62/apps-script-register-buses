@@ -1,0 +1,178 @@
+<!-- Load the jQuery UI styles. -->
+<!-- <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.10.0/themes/base/jquery-ui.css" /> -->
+
+<!-- Custom styles. -->
+<style>
+  :root { 
+    --width: calc(100vw-20px); 
+    --height: 700px;
+    --selector_height: 55px;
+    } /* Set the variable --width */
+
+  body {
+    width: calc(var(--width));
+    height: calc(var(--height));
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    padding: 10px 30px 10px 30px;
+  }
+
+  #div_table, #div_absense {
+    height: calc(var(--height)-2px);
+    width: calc(var(--width));
+    flex-wrap: wrap;
+  }
+
+  th, td {
+    padding: 0.10rem;
+  }
+
+  .td_nom, .td_status, .td_time, .td_bus, .td_distance, .td_bus_out, .td_bus_in {
+    text-align: center;
+  }
+
+  .td_abs_nom, .td_depot, .td_bus_model, .td_reg_plate, .td_absense_status {
+    text-align: center;
+  }
+
+  .td_route_exit, .th_route_exit { 
+    text-align: center;
+    background-color: rgb(15, 82, 134);
+    color: white;
+    font-size: 12px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  
+  .td_distance, .th_distance {
+    max-width: 12vw;
+  }
+
+  .span_exit {
+    background-color: white;
+    color: rgb(15, 82, 134); 
+    width: 20px;
+    padding: 3px;
+  }
+
+  .span_route {
+    padding: 3px;
+  }
+
+  .spn_out {
+    font-size: 13px;
+    text-align: center;
+    font-family: monospace;
+  }
+
+  .spn_in {
+    font-size: 13px;
+    text-align: center;
+    font-family: monospace;
+  }
+
+  .btn_out, .btn_in, .bus_distance { margin: auto; }
+
+  #table_id tbody tr {
+    height: 25px;
+  }
+
+  #table_id tbody tr .bus_distance {
+     display: none;
+  }
+
+  #table_id tbody tr .span_distance {
+    display: block;
+  }
+
+  #table_id tbody tr:hover .bus_distance {
+    display: block;
+  }
+
+  #table_id tbody tr:hover .span_distance {
+    display: none;
+  }
+
+  .dataTables_length {
+    padding-bottom: 10px;
+  }
+
+  button.block {
+    display: inline-block;
+    flow: left;
+  }
+
+  #div_selector {
+    display: flex;
+    text-align: top;
+    width: 100%;
+    padding-bottom: 10px;
+    height: calc(var(--selector_height));
+  }
+
+  #btn_selector_in_out {
+    width: calc(50% - 2px);
+    display: inline-block;
+    margin-right: 2px;
+    margin-top:0px;
+    height: 100%;
+    flow: left;
+  }
+
+  #btn_selector_absense {
+    width: calc(50% - 2px);
+    display: inline-block;
+    height: 100%;
+    margin-left: 2px;
+    margin-top:0px;
+    flow: left;
+  }
+
+  #div_absense {
+    height: calc(var(--height)-2px);
+    width: calc(var(--width));
+    flex-wrap: wrap;
+    display: none;
+  }
+
+  .tbl_absense, .dataTables_scrollFootInner { width: 98vw;}
+
+  <!-- div_absense -->
+
+  #dtrange_input_id, #comment_input_id {
+    width: 6vw; 
+  }
+
+  #status_select_id {
+    width: 7vw; 
+  }
+
+  #th_abstype_id {
+    width: 7vw; 
+  }
+
+  .red_asterix { color: red; padding-right:5px;} 
+
+  foot input {
+         padding: 3px;
+  }
+
+  .form-select, .form-select > option {
+    border-width: 0;
+    background-color: transparant;
+  }
+
+  #tbl_dialog td { 
+    margin-top: 10px;
+    padding-bottom: 10px;
+    }
+
+  #favDialog, #favDialog select, #favDialog input {
+    border-style; solid;
+    border-width: 1px;
+    border-color: rgb(132, 173, 234);
+  }
+
+  #confirmBtn { margin-right:10px;}
+
+</style>

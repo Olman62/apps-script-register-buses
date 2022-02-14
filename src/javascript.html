@@ -1,0 +1,137 @@
+<!-- Load the jQuery and jQuery UI libraries. -->
+<!-- <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+<script src="https://code.jquery.com/ui/1.10.0/jquery-ui.min.js"></script>
+-->
+<!-- See the link: https://github.com/googleworkspace/apps-script-samples/tree/master/tasks/simpleTasks -->
+
+<script>
+  var clickedAbsenceRowData;
+
+  $(document).on('click', '.btn_out', function(event) {
+      var btnOutID = $(event.target).attr('id');
+      console.log('btnOutID: '+btnOutID);
+      hideButtonShowSpan(btnOutID);
+
+      var btnInId = btnOutID.replace('btno', 'btni');
+
+      $('#'+btnInId).show();
+  });
+
+  $(document).on('click', '.btn_in', function(event) {
+      var btnID = $(event.target).attr('id');
+      
+      $('#'+btnID).hide();
+      var spanIn = $('#'+btnID).parent().children('span');
+      const d = new Date();
+      let ttext = currentHhMmSs(d);
+      spanIn.text(ttext);
+      spanIn.show();
+  }); 
+
+  function hideButtonShowSpan(btnId) {
+    $('#'+btnId).hide();
+      var span = $('#'+btnId).parent().children('span');
+      const d = new Date();
+      let ttext = currentHhMmSs(d);
+      span.text(ttext);
+      span.show();
+  }
+
+  $(document).on("change", ".bus_distance", function(event) {
+      console.log('Input value: %s', event.target.value);
+      var span = $(event.target).parent().children('span');
+
+      span.text(event.target.value);
+
+  });
+
+  $(document).on('click', '#btn_selector_in_out', function() {
+    $('#btn_selector_in_out').removeClass('btn-secondary').addClass('btn-primary');
+    $('#btn_selector_absense').removeClass('btn-primary').addClass('btn-secondary');
+
+    $('#div_table').show();
+    $('#div_absense').hide();
+
+    $(window).trigger('resize');
+  });
+
+  $(document).on('click', '#btn_selector_absense', function() {
+
+    $('#btn_selector_absense').removeClass('btn-secondary').addClass('btn-primary');
+    $('#btn_selector_in_out').removeClass('btn-primary').addClass('btn-secondary');
+
+    $('#div_table').hide();
+    $('#div_absense').show();
+    $(window).trigger('resize');
+  });
+
+  function btnOutClick(id) {
+      alert(id);
+  }
+
+  function currentHhMmSs(curTime) {
+    var today = new Date();
+    var hh = String(today.getHours()).padStart(2, '0');
+    var mm = String(today.getMinutes() + 1).padStart(2, '0');
+    var ss = String(today.getSeconds()).padStart(2, '0');
+
+    return hh + ':' + mm + ':' + ss;
+  }
+
+  $(document).on('dblclick', '#tbl_absense_id tbody tr', function(event) {
+    
+    $('#absense_editor').show();
+    var table = $('#tbl_absense_id').DataTable();
+    var data = table.row( this ).data();
+    clickedAbsenceRowData = this;
+
+    $('#dl_reg_plates').val(data[2]);
+
+    $('#dl_absense_type').val(data[3]);
+
+    var favDialog = document.getElementById('favDialog');
+
+    if (data[5]!=null && data[5].length>14) {
+      var parts = data[5].split(' -');
+      console.log('parts length: %s', parts.length);
+      if (parts.length>0) {
+        parts[0]=parts[0].trim().replace(' ','T');
+        $('#dl_start_date').val(parts[0]);
+
+        if (parts.length>1) {
+          parts[1]=parts[1].trim().replace(' ','T');
+          //alert(parts[1]);
+          $('#dl_end_date').val(parts[1]);
+        }
+        else {
+          $('#dl_end_date').val('');
+        }
+      }
+      else {
+        $('#dl_start_date').val('');
+      }
+    }
+    else {
+      $('#dl_start_date').val('');
+      $('#dl_end_date').val('');
+    }
+
+    if (typeof favDialog.showModal === "function") {
+      favDialog.showModal();
+    } else {
+      alert("The <dialog> API is not supported by this browser");
+    }
+  });
+
+  $(document).on('click', '#confirmBtn', function(event) {
+
+    if ($('#dl_start_date').val().length>=0) {
+      clickedAbsenceRowData.querySelectorAll('.td_date_range')[0].innerText = $('#dl_start_date').val().replace('T', ' ')+' - ';
+    }
+    
+    if ($('#dl_end_date').val().length>=8) {
+      clickedAbsenceRowData.querySelectorAll('.td_date_range')[0].innerText += ' '+$('#dl_end_date').val().replace('T', ' ');
+    }
+  });
+
+</script>
