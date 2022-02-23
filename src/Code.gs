@@ -13,12 +13,20 @@ function readAbsenses() {
   return readSheetValues('absence!absenceRange');
 }
 
+function readBusModels() {
+  return readSheetValues('bus_models!busModelsRange');
+}
+
 function readAbsenseTypes() {
   return readSheetValues('absence_type!absenceTypesRange');
 }
 
 function readStatuses() {
   return readSheetValues('statuses!statusesRange');
+}
+
+function readDepots() {
+  return readSheetValues('depots!depotRange');
 }
 
 function readSheetValues(rangeName) {
