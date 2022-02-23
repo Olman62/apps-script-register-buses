@@ -13,8 +13,12 @@
    
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
     
     <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.11.3/datatables.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
 
     <?!= HtmlService.createHtmlOutputFromFile('stylesheet').getContent(); ?>
     
@@ -36,7 +40,6 @@
             <?= values2[i][8]!=null ? values2[i][8] : '' ?>
           ]);
         <? } ?>
-        //console.log('i: %s', inOutData[i][3]);
 
         <? 
           var regPlates = values2.map( function(item) {
@@ -51,15 +54,26 @@
         <? for (var i=0; i<absenseValues.length; i++) { ?>
           absenseData.push([
              <?= !isNaN(absenseValues[i][0]) ? absenseValues[i][0] : '' ?>,
-            <?= !isNaN(absenseValues[i][1]) ? absenseValues[i][1] : '' ?>,
-            <?= absenseValues[i][2]!=null ? absenseValues[i][2] : "" ?>,
+            <?= absenseValues[i][1]!=null ? absenseValues[i][1] : "" ?>,
+            <?= absenseValues[i][2]!=null ? absenseValues[i][2] : "" ?>, 
             <?= absenseValues[i][3]!=null ? absenseValues[i][3] : "" ?>,
             <?= absenseValues[i][4]!=null ? absenseValues[i][4] : "" ?>,
             <?= absenseValues[i][5]!=null ? absenseValues[i][5] : "" ?>,
-            <?= absenseValues[i][6]!=null ? absenseValues[i][6] : "" ?>
+            <?= absenseValues[i][6]!=null ? absenseValues[i][6] : "" ?>,
+            <?= absenseValues[i][7]!=null ? absenseValues[i][7] : "" ?>
           ]);
         <? } ?>
 
+        let statusData = [];
+
+        <? var statusValues = readStatuses(); ?>
+
+        <? for (var i=0; i<statusValues.length; i++) { ?>
+          statusData.push([
+            <?= statusValues[i][0]!=null ? statusValues[i][0] : "" ?>,
+            <?= statusValues[i][1]!=null ? statusValues[i][1] : "" ?>
+          ]);
+        <? } ?>
 
         $(document).ready(function () {
             $('#table_id').DataTable({
@@ -73,6 +87,20 @@
               },
               */
               data: inOutData,
+              initComplete: function () {
+                  this.api().columns().every( function () {
+                      var that = this;
+
+                      $( 'select, input', this.footer() ).on( 'keyup change clear', function () {
+                          if ( that.search() !== this.value ) {
+                              that
+                                  .search( this.value )
+                                  .draw();
+                          }
+                      } );
+
+                  } );
+              },
               columns: [
                 { "title": "#", class: "td_nom" },
                 { "title": "Status", class: "td_status" },
@@ -85,7 +113,6 @@
                     if (parts.length<2) return data;
                     data='<span class="span_route">'+ parts[0] + '</span>'+
                          '<span class="span_exit">'+ parts[1] + '</span>';
-                    //data=data.replace(' ', '/');
                     return data;
                   }
                 },
@@ -150,14 +177,10 @@
               */
               data: absenseData,
               initComplete: function () {
-                  // Apply the search
-                  //i=0;
                   this.api().columns().every( function () {
                       var that = this;
 
-                      // console.log('i: %d', i);
                       $( 'select, input', this.footer() ).on( 'keyup change clear', function () {
-                          //console.log('Select Searched');
                           if ( that.search() !== this.value ) {
                               that
                                   .search( this.value )
@@ -170,6 +193,7 @@
               columns: [
                 { "title": " #", class: "td_abs_nom" },
                 { "title": "Depot", class: "td_depot" },
+                { "title": "Bus Model", class: "td_bus_model" },
                 { "title": "Bus", class: "td_reg_plate" },
                 { "title": "Absence Type", class: "td_absense_type" },
                 { "title": "Status", class: "td_absense_status" },
@@ -219,7 +243,31 @@
             <th class="td_bus_out"> Arrival </th>
           </tr>
         </thead>
-        
+        <tfoot>
+          <tr>
+            <th>  &nbsp; </th>
+            <th>  
+              <select class="form-select" id="status_filter_id">
+              <option value="" selected> All </option>
+              <script>
+                for (i=0; i<statusData.length; i++) {
+                  document.write("<option value='"+statusData[i][0]+"'>" + statusData[i][1] +"</option>");
+                }
+              </script>  
+              </select>
+            </th>
+            <th style="background-color: #ffffff">  &nbsp; </th>
+            <th>  
+              <input type="text" id="buses_filter_id" value="">
+            </th>
+            <th>  
+              <input type="text" id="drivers_filter_id" value="">
+            </th>
+            <th>  &nbsp; </th>
+            <th>  &nbsp; </th>
+            <th>  &nbsp; </th>
+          </tr>
+        </tfoot>
         <tbody id="tableBody">
           
         </tbody>
@@ -232,10 +280,14 @@
     </div>
 
     <div id="div_absense">
+      <button id="addAbsence">
+        <i class="fas fa-plus"></i>
+      </button>
       <table id="tbl_absense_id" class="display tbl_absense">
         <thead>
           <th class="th_abs_nom"> # </th>
           <th class="th_depot"> Depot # </th>
+          <th class="th_bus_model"> Bus Model </th>
           <th class="th_reg_plate"> Bus </th>
           <th class="th_absense_type"> Absence type </th>
           <th class="th_absense_status"> Status </th>
@@ -249,9 +301,19 @@
             <th id="th_depot_id"> 
               <select class="form-select">
               <option value="All" selected> All </option>
-              <option value="1"> 1st </option>
-              <option value="2"> 2ns </option>
-              <option value="3"> 3rd </option>
+              <option value="Depot 1"> 1st </option>
+              <option value="Depot 2"> 2ns </option>
+              <option value="Depot 3"> 3rd </option>
+              </select>
+            </th>
+            <th id="th_model_id"> 
+              <select class="form-select" id="bus_models_select_id">
+              <option value="" selected> All </option>
+              <? var busModelValues = readBusModels(); 
+                for (i=0; i<busModelValues.length; i++) {
+              ?>
+              <option value=<?= busModelValues[i][1] ?> > <?= busModelValues[i][0] ?> </option>
+              <? } ?>
               </select>
             </th>
              <th id="th_reg_plate"> 
@@ -296,64 +358,115 @@
       </table>
     </div>
 
-    <div id="absense_editor" style="display: none;">
+    <div id="absense_editor" class="container" style="display: none;">
       <dialog id="favDialog"> <!-- see link: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog -->
-        <form method="dialog">
-          <table id="tbl_dialog">
-            <tr>
-              <td> <snap>Bus</snap><snap class="red_asterix">*</snap></td>
-              <td>
-                <select id="dl_reg_plates" class="form-control" ></select> 
-              </td>
-            </tr>
-            <tr>
-              <td> <snap>Absence type</snap><snap class="red_asterix">*</snap></td>
-              <td>
-                <select id="dl_absense_type" class="form-control"></select> 
-              </td>
-            </tr>
-            <tr>
-              <td> <snap>Start date</snap><snap class="red_asterix">*</snap></td>
-              <td> 
-                <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
-                <input type="datetime-local" id="dl_start_date" class="form-control">
-              </td>
-            </tr>
-            <tr>
-              <td> <snap>End date</snap><snap class="red_asterix">*</snap></td>
-              <td> 
-                <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
-                <input type="datetime-local" id="dl_end_date" class="form-control">
-              </td>
-            </tr>
-            <tr>
-              <td> <snap>Comment</snap></td>
-              <td> 
-                <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
-                <input type="text" id="dl_comment" class="form-control" >
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td> </td>
-            </tr>
-            <tr>
-              <menu>
-                <td></td>
-                <td>
-                  <table>
-                    <tr>
-                      <td><button id="confirmBtn" value="default" class="form-control">Save</button></td>
-                      <td> &nbsp; &nbsp; &nbsp;</td>
-                      <td><button value="cancel" class="form-control">Close</button></td>
-                    </tr>
-                  </table>
-                </td>
-              </menu>
-            </tr>
-          </table>
-        </form>
+        <table>
+          <tr>
+            <td>
+              <form method="dialog">
+                <table id="tbl_dialog">
+                  <tr id="absence_edtor_dept_row" style="display: none;">
+                    <td> <snap>Depot</snap><snap class="red_asterix">*</snap></td>
+                    <td>
+                      <select id="dl_depots" class="form-control" >
+                        <option value="" selected> All </option>
+                          <? var depotValues = readDepots(); 
+                            for (i=0; i<depotValues.length; i++) {
+                          ?>
+                        <option value=<?= depotValues[i][0] ?> > <?= depotValues[i][1] ?> </option>
+                        <? } ?>
+                      </select> 
+                    </td>
+                  </tr>
+                  <tr id="absence_edtor_model_row" style="display: none;">
+                    <td> <snap>Bus Model</snap><snap class="red_asterix">*</snap></td>
+                    <td>
+                      <select id="dl_bus_models" class="form-control" >
+                        <option value="" selected> All </option>
+
+                        <? var modelValues = readBusModels(); 
+                          for (i=0; i<modelValues.length; i++) {
+                          ?>
+                            <option value=<?= modelValues[i][0] ?> > <?= modelValues[i][1] ?> </option>
+                          <? } ?>
+                      </select> 
+                    </td>
+                  </tr>
+                  <tr>
+                    <td> <snap>Bus</snap><snap class="red_asterix">*</snap></td>
+                    <td>
+                      <select id="dl_reg_plates" class="form-control" ></select> 
+                    </td>
+                  </tr>
+                  <tr>
+                    <td> <snap>Absence Type</snap><snap class="red_asterix">*</snap></td>
+                    <td>
+                      <select id="dl_absense_type" class="form-control"></select> 
+                    </td>
+                  </tr>
+                  <tr>
+                    <td> <snap>Start Date</snap><snap class="red_asterix">*</snap></td>
+                    <td> 
+                      <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
+                      <input type="datetime-local" id="dl_start_date" class="form-control">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td> <snap>End Date</snap><snap class="red_asterix">*</snap></td>
+                    <td> 
+                      <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
+                      <input type="datetime-local" id="dl_end_date" class="form-control">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td> <snap>Comment</snap></td>
+                    <td> 
+                      <!-- See: https://www.w3schools.com/tags/att_input_type_datetime-local.asp -->
+                      <input type="text" id="dl_comment" class="form-control" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td> </td>
+                  </tr>
+                  <tr>
+                    <menu>
+                      <td></td>
+                      <td>
+                        <table>
+                          <tr>
+                            <td><button id="confirmBtn" value="default" class="form-control">Save</button></td>
+                            <td> &nbsp; &nbsp; </td>
+                            <td><button value="cancel" class="form-control">Cancel</button></td>
+                            <td> &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;</td>
+                            <td id="td_circle"> 
+                              <div class="circle">
+                                <i class="fa fa-chevron-left hide" aria-hidden="true"></i>
+                                <i class="fa fa-chevron-right" aria-hidden="true"></i>    
+                              </div>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </menu>
+                  </tr>
+                </table>
+                
+              </form>
+            </td>
+            <td>
+              <div id="dl_images">
+                <img 
+                src="https://drive.google.com/uc?id=1teEMTWLxvYOnG3DKS9wyusWyAPAsYb2E"
+                width="290" height="104"
+                >
+              </div>
+            </td>
+          </tr>
+        </table>
+        
       </dialog>
+      
     </div>
 
     <?!= HtmlService.createHtmlOutputFromFile('javascript').getContent(); ?>
