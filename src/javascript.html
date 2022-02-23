@@ -1,11 +1,6 @@
-<!-- Load the jQuery and jQuery UI libraries. -->
-<!-- <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
-<script src="https://code.jquery.com/ui/1.10.0/jquery-ui.min.js"></script>
--->
-<!-- See the link: https://github.com/googleworkspace/apps-script-samples/tree/master/tasks/simpleTasks -->
-
 <script>
   var clickedAbsenceRowData;
+  var isNewAbsence = false;
 
   $(document).on('click', '.btn_out', function(event) {
       var btnOutID = $(event.target).attr('id');
@@ -79,20 +74,24 @@
   }
 
   $(document).on('dblclick', '#tbl_absense_id tbody tr', function(event) {
-    
+    isNewAbsence = false;
+
+    $('#absence_edtor_dept_row').hide();
+    $('#absence_edtor_model_row').hide();
+
     $('#absense_editor').show();
     var table = $('#tbl_absense_id').DataTable();
     var data = table.row( this ).data();
     clickedAbsenceRowData = this;
 
-    $('#dl_reg_plates').val(data[2]);
+    $('#dl_reg_plates').val(data[3]);
 
-    $('#dl_absense_type').val(data[3]);
+    $('#dl_absense_type').val(data[4]);
 
     var favDialog = document.getElementById('favDialog');
 
-    if (data[5]!=null && data[5].length>14) {
-      var parts = data[5].split(' -');
+    if (data[6]!=null && data[6].length>14) {
+      var parts = data[6].split(' -');
       console.log('parts length: %s', parts.length);
       if (parts.length>0) {
         parts[0]=parts[0].trim().replace(' ','T');
@@ -100,7 +99,7 @@
 
         if (parts.length>1) {
           parts[1]=parts[1].trim().replace(' ','T');
-          //alert(parts[1]);
+          
           $('#dl_end_date').val(parts[1]);
         }
         else {
@@ -123,15 +122,74 @@
     }
   });
 
+  $(document).on('click', '#addAbsence', function() {
+    isNewAbsence = true;
+
+    $('#absence_edtor_dept_row').show();
+    $('#absence_edtor_model_row').show();
+
+    $('#absense_editor').show();
+    var favDialog = document.getElementById('favDialog');
+
+    $('#dl_depots').val("");
+    $('#dl_bus_models').val("");
+
+    $('#dl_reg_plates').val("");
+    $('#dl_absense_type').val("");
+
+    $('#dl_start_date').val('');
+    $('#dl_end_date').val('');
+
+    $('#dl_comment').val('');
+
+    if (typeof favDialog.showModal === "function") {
+      favDialog.showModal();
+    } else {
+      alert("The <dialog> API is not supported by this browser");
+    }
+  });
+
   $(document).on('click', '#confirmBtn', function(event) {
+    var table = $('#tbl_absense_id').DataTable();
+    
+    var dateRange = "";
 
     if ($('#dl_start_date').val().length>=0) {
-      clickedAbsenceRowData.querySelectorAll('.td_date_range')[0].innerText = $('#dl_start_date').val().replace('T', ' ')+' - ';
+      dateRange = $('#dl_start_date').val().replace('T', ' ')+' - ';
     }
     
     if ($('#dl_end_date').val().length>=8) {
-      clickedAbsenceRowData.querySelectorAll('.td_date_range')[0].innerText += ' '+$('#dl_end_date').val().replace('T', ' ');
+      dateRange += ' '+$('#dl_end_date').val().replace('T', ' ');
     }
+    
+    if (isNewAbsence) {
+      var newRowId = table.rows().data().length;
+
+      table.row.add([
+        newRowId+1,
+        $('#dl_depots').val(),
+        $('#dl_bus_models').val(),
+        $('#dl_reg_plates').val(),
+        $('#dl_absense_type').val(),
+        'current',
+        dateRange,
+        $('#dl_comment').val()
+      ]).draw( false );
+
+      table.page( 'last' ).draw( 'page' );
+    }
+    else {
+      var row = table.row(clickedAbsenceRowData);
+      var rowIndex = row.index();
+
+      row.cell(rowIndex,6).data(dateRange).draw();
+
+      row.cell(rowIndex,4).data($('#dl_absense_type').val()).draw();
+
+      row.cell(rowIndex,7).data($('#dl_comment').val()).draw();
+
+    }
+    
   });
 
 </script>
