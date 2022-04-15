@@ -37,6 +37,6 @@ The javascript file contains JavaScript code of the project, and  it is included
 
 The stylesheet file is similar to a usual stylesheet file but with an unusual file extension because of Google Apps Scrip project features.
 
-### Ste-by-step Description of the project
+### Step-by-step Description of the project
 
 To read step-by-step instructions about how to create this project in a real environment, follow the [link](https://www.expknow.com/how-to-create-apps-script-in-google-account/).
